@@ -1,4 +1,4 @@
-# CS 5787 Deep Learning Assignment #1 - DL Basics
+# CS 5787 Deep Learning Assignment #3 - VAE & GAN
 
 Authors: Mitchell Krieger
 
