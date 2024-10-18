@@ -23,21 +23,40 @@
     \item $\theta \neq 0$
         \begin{itemize}
             \item KL Divergence: \\ When $\theta = 0$ there is no overlap between P and Q. This means that whenever P is greater than zero, Q is zero. Applying this to the 
-            KL formula at $x=0$ we get
+            KL formula at $x=0$ and assume that we can represent x as the Dirac delta function $\delta(x)$, and $u(y)$ is the uniform distribution over [0,1].
             \begin{equation}
                 \begin{aligned}
-                    D_{KL}(P||Q) =  P(0)\log \frac{P(0)}{0} dx = \infty
+                    D_{KL}(P||Q) &= \int_{x=-\infty}^{\infty} \int_{y=-\infty}^{\infty} P(x,y)\log \frac{P(x,y)}{Q(x,y)}dydx
+                    \\ &= \int_{x=-\infty}^{\infty} \int_{y=-\infty}^{\infty} \delta(x)\cdot u(y)\log \frac{\delta(x)\cdot u(y)}{\delta(x-\theta)\cdot u(y)}dydx
+                    \\ &= \int_{x=-\infty}^{\infty} \delta(x)  \int_{y=0}^{1} \log(\frac{\delta(x)\cdot 1}{\delta(x-\theta)\cdot 1}) dx
                 \end{aligned}
             \end{equation}
-            We can see from the above that because the logarithm in the equation is undefined, we get a value for KL Divergence of $\infty$.\\
+            Since, $\delta(x)$ is zero everywhere except $x=0$
+            \begin{equation}
+                \begin{aligned}
+                    D_{KL}(P||Q) &= \int_{y=0}^{1} \log(\frac{\delta(0)}{\delta(-\theta)}) dy
+                    \\ &=  \frac{\delta(0)}{0} = \infty
+                \end{aligned}
+            \end{equation}
+            We can see from the above that because the logarithm in the equation is undefined, we get a value for KL Divergence that tends to $\infty$.\\
             \item JS Divergence: \\ The JS Divergence considers the KL Divergence between each distribution and the average of the two distributions.
             The average distribution $\frac{P+Q}{2}$ will split the distribution to be half at $x = 0$ and half at $x = \theta$. Therefore, The KL Divergence between
             P and the average will be:
             \begin{equation}
                 \begin{aligned}
-                    D_{KL}(P||\frac{P+Q}{2}) =  1 \cdot \log(\frac{1}{0.5}) = \log(2)
+                    D_{KL}(P||\frac{P+Q}{2}) &= \int_{x=-\infty}^{\infty} \int_{y=-\infty}^{\infty} P(x,y)\log \frac{P(x,y)}{\frac{1}{2}P(x,y)+\frac{1}{2}Q(x,y)}dydx
+                    \\ &= \int_{x=-\infty}^{\infty} \delta(x)  \int_{y=0}^{1} \log(\frac{\delta(x)\cdot u(y)}{\frac{1}{2}\delta(x)\cdot u(y)+\frac{1}{2}\delta(x-\theta)\cdot u(y)})
                 \end{aligned}
             \end{equation}
+            Since, $\delta(x)$ is zero everywhere except $x=0$, and $\delta(x-\theta) = 0$ at $x=0$
+            \begin{equation}
+                \begin{aligned}
+                    D_{KL}(P||\frac{P+Q}{2}) &= \int_{y=0}^{1} \log(\frac{\delta(0))\cdot u(y)}{\frac{1}{2}\delta(0)\cdot u(y)+\frac{1}{2}\cdot0\cdot u(y)})
+                    \\  &=  \log(\frac{1}{\frac{1}{2}}) 
+                    \\  &= \log(2)
+                \end{aligned}
+            \end{equation}
+
             $D_{KL}(Q||\frac{P+Q}{2})$ will give the same result. So applying the JS Divergence formula:
             \begin{equation}
                 \begin{aligned}
@@ -53,9 +72,9 @@
             \item KL Divergence: \\ Zero because the distributions are the same
             \begin{equation}
                 \begin{aligned}
-                    D_{KL}(P||Q) &= \int_{-\infty}^{\infty} P(x)\log \frac{P(x)}{P(x)}dx\\
-                    &= \int_{-\infty}^{\infty} P(x)\log1\\
-                    &= \int_{-\infty}^{\infty} P(x) 0 \\
+                    D_{KL}(P||Q) &= \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} P(x)\log \frac{P(x,y)}{P(x,y)}dydx\\
+                    &= \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} P(x,y)\log1 dydx\\
+                    &= \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} 0\cdot P(x,y)  dydx\\
                     &= 0
                 \end{aligned}
             \end{equation}
