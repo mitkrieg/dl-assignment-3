@@ -7,6 +7,7 @@
 
 \input{header}
 
+\DeclareMathOperator{\softplus}{softplus}
 
 \title{CS5787: Exercises 3 \\ \begin{small}\url{https://github.com/mitkrieg/dl-assignment-3}\end{small}}
 \author{Mitchell Krieger \\ mak483@cornell.edu}
@@ -114,6 +115,214 @@ So the total time complexity is quadratic at $O(N^2)$
 
 \section{Practical: Question 4 [20 pts]}
 
+The goal for this problem was to implement the M1 architecture described in "Semi-supervised Learning with Deep Generative Models" (Kingsma et al.) for the Fashion MNIST dataset.
+M1 attempts to build a generative model that can create images in the likeness of the the data using a Variational autoencoder (VAE) with an SVM head. This model was trained using a 
+semi-supervised method. The encoder in the VAE aims to predict the mean and variance of the distribution over the latent variable $z$. However, because of the random nature of $z$,
+we are unable to take the derivative of it which means it can't be used in back propagation. To address this, the reparameterization trick is used, where instead of directly sampling from this distribution
+we sample from the standard gaussian distribution and then shift it by the mean and variance predicted by the encoder. Then the decoder uses this sample to reconstruct an image. 
+
+In addition, an SVM with a radial basis function kernel is trained as a head for this model to classify the generated images using the latent representations created by the encoder as input. Two SVMs were trained for each model using different regularization parameters,
+and the one with the better accuracy was chosen.
+
+Four VAE models were trained each with an increasing number of labeled samples 100, 600, 1000 and 3000, and the results are described in the table below:
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|}
+    \hline
+    N    & SVM Head Test Set Accuracy \\
+    \hline
+    100  & 0.5957                     \\
+    \hline
+    600  & 0.7015                     \\
+    \hline
+    1000 & 0.7093                     \\
+    \hline
+    6000 & 0.7291 \\
+    \hline               
+    \end{tabular}
+\end{table}
+
+\newpage
+An example of the generated output and the SVM prediction is below:
+
+\includegraphics[scale=0.7]{../src/svm_predict.png}
+
 \section{Practical: Question 5 [25 pts]}
+
+The goal of was to also build a generative model that can create images in the likeness of the Fashion MNIST dataset but this time using 3 GAN methods (DCGAN, WGAN with clipping, WGAN-GP) over 2 different architectures.
+Both architectures used have a discriminator/critic that consists of 4 convolutional layers with a kernel size of 4, stride of 2 and padding of 1 (except for the final layer has 
+zero padding), followed by a fully connected layer. The generator has these same layers in reverse order. The main difference between the two architectures is the use of normalization
+and choice of activation function. In architecture A, Leaky ReLU was used with a negative slope of 0.2 as an activation function. In addition, BatchNorm (or LayerNorm in WGAN-GP) was used for normalization.
+Architecture B on the other hand, uses an adjusted softplus, $\frac{\softplus(2x+2)}{2}$ and has no normalization. \\
+\\
+
+\begin{figure}[ht]
+    \caption{Real Pullovers compared with Generated Pullovers}
+    \centering
+    % Left side: Two side-by-side images
+    \resizebox{0.6\textwidth}{!}{
+    \begin{minipage}[t]{0.45\textwidth}
+        \vfill
+        \centering
+        \begin{minipage}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../src/real_pullover1.png}
+            % \caption{Real Sample 1}
+            % \label{fig:image4}
+        \end{minipage}
+        \hfill
+        \begin{minipage}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../src/real_pullover2.png}
+            % \label{fig:image5}
+        \end{minipage}
+        \vfill
+    \end{minipage}
+    \hfill
+    % Right side: Three stacked images
+    \begin{minipage}[t]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../src/dc_pullover.png}
+        \caption{DCGAN}
+        \label{fig:image1}
+        \vspace{0.1cm} % Space between the images
+
+        \includegraphics[width=\textwidth]{../src/wgan_pullover.png}
+        \caption{WGAN with Weight Clipping}
+        \label{fig:image2}
+        \vspace{0.1cm} % Space between the images
+
+        \includegraphics[width=\textwidth]{../src/gp_pullover.png}
+        \caption{WGAN-GP}
+        \label{fig:image3}
+    \end{minipage}
+    }
+\end{figure}
+
+
+\begin{figure}[ht]
+    \caption{Real Ankle Boot compared with Generated Ankle Boot}
+    \centering
+    % Left side: Two side-by-side images
+    \resizebox{0.6\textwidth}{!}{
+    \begin{minipage}[t]{0.45\textwidth}
+        \vfill
+        \centering
+        \begin{minipage}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../src/real_boot1.png}
+            \label{fig:image4}
+        \end{minipage}
+        \hfill
+        \begin{minipage}[b]{0.45\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{../src/real_boot2.png}
+            \label{fig:image5}
+        \end{minipage}
+        \vfill
+    \end{minipage}
+    \hfill
+    % Right side: Three stacked images
+    \begin{minipage}[t]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../src/dc_boot.png}
+        \caption{DCGAN}
+        \label{fig:image1}
+
+        \includegraphics[width=\textwidth]{../src/wgan_boot.png}
+        \caption{WGAN with Weight Clipping}
+        \label{fig:image2}
+
+        \includegraphics[width=\textwidth]{../src/gp_boot.png}
+        \caption{WGAN-GP}
+        \label{fig:image3}
+    \end{minipage}  
+    }
+\end{figure}
+
+Architecture A had consistently better visual results after training for 10 epochs. The figures above display real samples for two classes (ankle boot and pullover) on the left compared with generated samples on the right for architecture A with each
+GAN method. All three models, generate images that are in the likeness of Fashion MNIST.  
+
+Loss for each model's generator and discriminator/critic has been plotted below as well.
+For all three models, we can see that the loss curves for architecture A converges much better than B (there was an order of magnitude difference between A
+and B loss for WGAN and WGAN-GP so zoomed in plots are provided on the following page). WGAN-GP's loss oscillates more frequently and has larger swings in later epochs suggesting
+that we may have been able to achieve the same results in less epochs. To train these models, it was easier to find convergence on WGAN and WGAN-GP than on DCGAN. For DCGAN,
+training was run 5 or 6 times before finding convergence. Where as with WGAN and WGAN-GP there was only 1 failed convergence and the rest converged (even if it was to a poor result).
+
+\begin{figure}[ht]
+    \centering
+    % First row
+    \caption{Loss Curves}
+    \begin{minipage}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../src/dc_gen_loss.png}
+        \label{fig:image1}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../src/dc_discrim_loss.png}
+        \label{fig:image2}
+    \end{minipage}
+    % Second row
+    \begin{minipage}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../src/wgan_gen_loss.png}
+        \label{fig:image3}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../src/wgan_crit_loss.png}
+        \label{fig:image4}
+    \end{minipage}
+
+    % Third row
+    \begin{minipage}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../src/gp_gen_loss.png}
+        \label{fig:image5}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../src/gp_crit_loss.png}
+        \label{fig:image6}
+    \end{minipage}
+
+\end{figure}
+
+
+
+\begin{figure}[ht]
+    \centering
+    % First row
+    \caption{Zoom-In: Loss Curve for WGAN and WGAN-GP Architecture A}
+    \begin{minipage}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../src/wgan_zoom_in_gen.png}
+        \label{fig:image1}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../src/wgan_zoom_in_crit.png}
+        \label{fig:image2}
+    \end{minipage}
+    % Second row
+    % \caption{Zoom-In: Loss Curve for WGAN and WGAN-GP Architecture A}
+    \begin{minipage}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../src/gp_zoom_in_gen.png}
+        \label{fig:image1}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[b]{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{../src/gp_zoom_in_crit.png}
+        \label{fig:image2}
+    \end{minipage}
+\end{figure}
 
 \end{document}

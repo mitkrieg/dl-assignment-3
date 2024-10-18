@@ -52,7 +52,55 @@ Lastly sci-kit learn's `SVC` module with a radial basis function kernel is train
 
 #### Loading, Saving & Testing
 
-Trained weights for the VAE have been saved to the `models/vae` directory as `.pth` files using the simple `torch.save()` method. The scikit-learn `SVC` model can be found in the same directory. Weights and models can be loaded for generation and testing by the following:
+Trained weights for the VAE have been saved to the `models/vae` directory as `.pth` files using the simple `torch.save()` method. A binary pickle file of scikit-learn `SVC` models can be found in the same directory. Weights and models can be loaded for generation and testing by the following:
+
+```python
+# Load VAE model weights
+tmp = VAE(input, hidden, latent).to(device)
+tmp.load_state_dict(torch.load('/content/drive/MyDrive/DL3/vae_1000.pth'))
+
+# Load SVM Head from picklefile
+with open('/content/drive/MyDrive/DL3/svm_1000.pkl', 'rb') as f:
+    head = pickle.load(f)
+
+def generate_images(model, head, num_images, latent_dim, device):
+    # Set the model to evaluation mode
+    model.eval()
+
+    # Sample from a standard normal distribution in the latent space
+    with torch.no_grad():
+        z = torch.randn(num_images, latent_dim).to(device)  # latent_dim is the size of the latent vector
+        generated_images = model.decoder(z)  # Pass through decoder to get reconstructed images
+        generated_images = generated_images.view(num_images, 28, 28).cpu()  # Reshape and move to CPU
+
+    preds = head.predict(z.cpu())
+
+    labels_map = {
+            0: "T-Shirt",
+            1: "Trouser",
+            2: "Pullover",
+            3: "Dress",
+            4: "Coat",
+            5: "Sandal",
+            6: "Shirt",
+            7: "Sneaker",
+            8: "Bag",
+            9: "Ankle Boot",
+        }
+
+    # Plot the generated images
+    fig, axes = plt.subplots(1, num_images, figsize=(num_images, 1))
+    for i in range(num_images):
+        axes[i].imshow(generated_images[i], cmap='gray')
+        axes[i].set_title(labels_map[preds[i]])
+        axes[i].axis('off')
+    plt.show()
+
+# Example usage:
+num_images = 10  # Specify how many images you want to generate
+latent_dim = 10  # Latent dimension used during training
+generate_images(vae, head, num_images, latent_dim, device)
+```
 
 
 
@@ -60,7 +108,7 @@ Trained weights for the VAE have been saved to the `models/vae` directory as `.p
 
 #### Models & Training
 
-Next we attemped 6 different GAN models to generate FashionMNIST images. There were three methods used DCGAN, WGAN, and WGAN-GP. Each method was attempted with two architectures A & B. These architectures are stored in two pytorch modules:
+Next we attemped 6 different GAN models to generate FashionMNIST images. There were three methods used DCGAN, WGAN, and WGAN-GP. Each method was attempted with two architectures A & B. All code for these 6 models can be found in [gan.ipynb](./gan.ipynb) These architectures are stored in two pytorch modules:
 - `Generator`: Generates new fake images
 - `Discriminator`: Discriminates or (Critiques or WGAN and WGAN-GP) between real and fake images
 
